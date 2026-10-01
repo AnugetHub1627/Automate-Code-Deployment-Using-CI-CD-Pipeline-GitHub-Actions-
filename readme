@@ -1,0 +1,38 @@
+* Project Overview :
+This repository contains a fully automated Continuous Integration and Continuous Deployment (CI/CD) pipeline built via GitHub Actions. The pipeline enforces high code 
+reliability by running automated verification checks and dynamically packaging the web application into an isolated Docker container, which is then automatically securely 
+shipped directly to DockerHub upon verified code updates.
+
+############# CI ########################
+- I wrote application code, json file for installing dependencies. Dockerfile to dockerised image. and workflow main.yml to run pipeline as following steps:
+1. pipeline will start when pushed anything in application code. set path and push on 
+2. INstalled project dependencies
+3. run the container 
+4. push image on DockerHub
+
+* Architecture Design & Lifecycle
+[ Push to main (index.js) ]
+          │
+          ▼
+┌───────────────────────────────────┐
+│     Job 1: Test & Validate        │  ◀── Runs on Hosted Ubuntu VM
+├───────────────────────────────────┤
+│ 1. Checkout Source Code           │
+│ 2. Initialize Node.js v20         │
+│ 3. Install App Dependencies       │
+│ 4. Run Automated Test Suite (npm) │
+└───────────────────────────────────┘
+
+              (Success)
+          │
+          ▼
+┌───────────────────────────────────┐
+│     Job 2: Build & Deploy         │  ◀── Only runs if Job 1 succeeds
+├───────────────────────────────────┤
+│ 1. Setup Docker Buildx Environment│
+│ 2. Authenticate with DockerHub    │  ◀── Uses encrypted GitHub Secrets
+│ 3. Compile Production Container   │  ◀── Optimizes via alpine footprint
+│ 4. Push tagged image to Cloud     │  ◀── Tags: 'latest' & Commit SHA
+└───────────────────────────────────┘
+
+##################### CD ##############################
