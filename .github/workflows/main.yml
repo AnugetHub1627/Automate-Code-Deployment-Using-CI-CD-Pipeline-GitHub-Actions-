@@ -1,50 +1,57 @@
-#test
-name: CI/CD pipeline
+name: Node.js CI-CD Pipeline
 
 on:
   push:
     branches:
       - main
 
-jobs:    # 1. Build Job: Handles testing and Docker image compilation
+jobs:
+  # Job 1: Installs, tests, and validates code quality
   build:
-    name: pull and verify docker image
+    name: Test and Validate Application
     runs-on: ubuntu-latest
+
     steps:
-      - name: checkout code
+      - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Log in to DockerHub
-        uses: docker/login-action@v3
+      - name: Set up Node.js Environment
+        uses: actions/setup-node@v4
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          node-version: '20'
+          cache: 'npm'
 
-      - name: pull existing image from DockerHub 
-        run: |
-          docker pull anummdocker/namurepo09:jobnewsImage
-      
-      - name: Test container startup 
-        run: |
-          docker run -d --name test_app -p 8080:8080 namurepo09/jobnewsImage:latest
-          sleep 5
-          docker ps
-          docker stop test_app
+      - name: Install Project Dependencies
+        run: npm ci
 
-# 2. Deployment Job (Optional execution tracking or multi-tagging)
+      - name: Run Automated Test Suite
+        run: npm test
+
+  # Job 2: Packages application into Docker and ships it to DockerHub
   deploy:
-    name: tag and release Update
-    needs: build
+    name: Build and Push Docker Image
+    needs: build # This ensures deployment ONLY runs if all tests pass
     runs-on: ubuntu-latest
+
     steps:
-      - name: Log in to DockerHub
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to DockerHub Portal
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Tag and push released version
-        run: |
-          docker pull namurepo09/jobnewsImage:latest
-          docker tag namurepo09/jobnewsImage:latest namurepo09/jobnewsImage:${{ github.sha }}
-          docker push namurepo09/jobnewsImage:${{ github.sha }}              
+      - name: Build and Push Production Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/node-web-app:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/node-web-app:${{ github.sha }}
