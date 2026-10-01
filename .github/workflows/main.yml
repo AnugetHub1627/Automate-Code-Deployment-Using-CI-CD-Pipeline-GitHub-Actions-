@@ -24,7 +24,7 @@ jobs:
           
 
       - name: Install Project Dependencies
-        run: npm npm install
+        run: npm install
 
       - name: Run Automated Test Suite
         run: npm test
