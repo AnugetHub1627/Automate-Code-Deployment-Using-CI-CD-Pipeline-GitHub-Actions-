@@ -22,11 +22,11 @@ jobs:    # 1. Build Job: Handles testing and Docker image compilation
 
       - name: pull existing image from DockerHub 
         run: |
-          docker pull namurepo09/jobnewsImage:latest
+          docker pull anummdocker/namurepo09:jobnewsImage
       
       - name: Test container startup 
         run: |
-          docker run -d --name test_app -p 8080:8080 namurepo09/jobnewsImage:latest
+          docker run -d --name test_app -p 8080:8080 namurepo09/jobnewsimage:latest
           sleep 5
           docker ps
           docker stop test_app
